@@ -5,14 +5,14 @@ typedef struct pixel{
 		int r, g, b;
 
 }Pixel;
-/*informacoes da imagem (tipo do arquivo, quantidade maxima de pixels, dimensao da imagem)*/
-typedef struct img{
+/*ppm image struct, to store on ram*/
+typedef struct ppm{
 	
 	char ext[3];
-	int maxpix;
-	int tamj, tami;
+	int max_pixel;
+	int sizej, sizei;
 	Pixel **pixel;
-}Img;
+}Ppm;
 #endif
 /*recebe um endereço de struct img e uma string;
 **Preenche a struct com o arquivo de mesmo nome
