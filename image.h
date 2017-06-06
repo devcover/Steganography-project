@@ -5,19 +5,19 @@ typedef struct pixel{
 		int r, g, b;
 
 }Pixel;
-/*ppm image struct, to store on ram*/
-typedef struct ppm{
-	
-	char ext[3];
+/*Portable aNy Map struct. we can use it for .pbm, .pgm, .ppm*/
+typedef struct pnm{
+
+	char pnm_type[3];
 	int max_pixel;
 	int sizej, sizei;
 	Pixel **pixel;
-}Ppm;
+
+}Pnm;
 #endif
-/*recebe um endereço de struct img e uma string;
-**Preenche a struct com o arquivo de mesmo nome
-**da string recebida. o arquivo deve ser .ppm;
-**retorna 1, caso o programa tenha sucedido e
-**0 para caso não tenha.*/
-int lerImagem(Img*, char*);
-int escreverImagem(Img *, char *);
+
+/*soon .bmp, .jpeg, .png*/
+
+//pnm's functions will read/write any pnm files
+int pnmReader(Pnm*, char*);
+int pnmWritter(Pnm*, char*);

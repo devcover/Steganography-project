@@ -1,4 +1,4 @@
-steg: main.c imagem.o
-	gcc -W main.c imagem.o -o steg
-imagem.o: imagem.c
-gcc -c imagem.c -W
+steg: main.c image.o
+	gcc -W main.c image.o -o steg
+image.o: image.c
+gcc -c image.c -W

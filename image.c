@@ -1,7 +1,21 @@
 #include "image.h"
 #include <stdio.h>
 #include <stdlib.h>
-//reads .ppm image and store information on and Img struct type
+int pnmReader(Pnm *image, char *file_name)
+{
+	FILE *channel;
+	int i, j;
+
+	channel = fopen(file_name, "r");
+	if(canal!=NULL)
+	{
+		fread(image->pnm_type,sizeof(3*char),);
+	}
+	else
+	{
+
+	}
+}
 int lerImagemppm(Img *imagem, char *nomeArq)
 {
 	FILE *canal;
