@@ -1,79 +1,115 @@
-#include "image.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include"image.h"
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
 int pnmReader(Pnm *image, char *file_name)
 {
 	FILE *channel;
 	int i, j;
 
 	channel = fopen(file_name, "r");
-	if(canal!=NULL)
+	if(channel!=NULL)
 	{
-		fread(image->pnm_type,sizeof(3*char),);
-	}
-	else
-	{
+		/*Reads the header*/
+		fscanf(channel, "%s", &image->pnm_type[0]);
+		fscanf(channel, "%d %d", &image->sizej, &image->sizei);
+		fscanf(channel, "%d", &image->max_pixel);
 
-	}
-}
-int lerImagemppm(Img *imagem, char *nomeArq)
-{
-	FILE *canal;
-	int i, j;
-	canal = fopen(nomeArq, "r");
-	if(canal != NULL)
-	{
-
-		fscanf(canal, "%s", imagem->ext);
-		fscanf(canal, "%d %d", &imagem->tamj, &imagem->tami);
-		fscanf(canal, "%d", &imagem->maxpix);
-
-		imagem->pixel = (Pixel**) malloc( sizeof(Pixel*) * imagem->tami);
-		for(i=0;i<imagem->tami;i++)
+		/*Sees what's the value of pnm_type to do the specific treatment to it*/
+		if(strcmp(image->pnm_type,"P6")==0)
 		{
-			imagem->pixel[i] = (Pixel*) malloc( sizeof(Pixel) * imagem->tamj);	
-			for(j=0;j<imagem->tami;j++)
+			if(image->max_pixel<256)
 			{
-				fscanf(canal, "%d %d %d", 
-					&imagem->pixel[i][j].r,
-					&imagem->pixel[i][j].g, &imagem->pixel[i][j].b);
+				image->pixel = (Pixel**) malloc( sizeof(Pixel*) * image->sizei);
+				for(i=0;i<image->sizei;i++)
+				{
+					image->pixel[i] = (Pixel*) malloc( sizeof(Pixel) * image->sizej);	
+					for(j=0;j<image->sizej;j++)
+					{
+						fread(&image->pixel[i][j].r,1,1,channel);
+						fread(&image->pixel[i][j].g,1,1,channel);
+						fread(&image->pixel[i][j].b,1,1,channel);
+					}
+				}
+			}
+			else
+			{
+				image->pixel = (Pixel**) malloc( sizeof(Pixel*) * image->sizei);
+				for(i=0;i<image->sizei;i++)
+				{
+					image->pixel[i] = (Pixel*) malloc( sizeof(Pixel) * image->sizej);	
+					for(j=0;j<image->sizej;j++)
+					{
+						fread(&image->pixel[i][j].r,2,1,channel);
+						fread(&image->pixel[i][j].g,2,1,channel);
+						fread(&image->pixel[i][j].b,2,1,channel);
+					}
+				}
 			}
 		}
-		fclose(canal);
-		return 1;
+		if(strcmp(image->pnm_type,"P5")==0){}
+		if(strcmp(image->pnm_type,"P4")==0){}
+		if(strcmp(image->pnm_type,"P3")==0)
+		{
+			image->pixel = (Pixel**) malloc( sizeof(Pixel*) * image->sizei);
+			for(i=0;i<image->sizei;i++)
+			{
+				image->pixel[i] = (Pixel*) malloc( sizeof(Pixel) * image->sizej);	
+				for(j=0;j<image->sizej;j++)
+				{
+					fscanf(channel,
+					"%d %d %d",
+					&image->pixel[i][j].r,
+					&image->pixel[i][j].g,
+					&image->pixel[i][j].b);
+				}
+			}
+		}
+		if(strcmp(image->pnm_type,"P2")==0){}
+		if(strcmp(image->pnm_type,"P1")==0){}
 	}
 	else
 	{
-		printf("error in creating a read stream\n");
+		printf("reading file \"%s\" error\n", file_name);
 		return 0;
 	}
 }
-int escreverImagemppm(Img *img, char *nomeArq)
+int pnmWritter(Pnm *image, char *file_name)
 {
-	int i,j;
+	FILE *channel;
+	int i, j;
 
-	FILE *canal;
-	canal = fopen(nomeArq,"w");
-	
-	if(canal != NULL)
+	channel = fopen(file_name, "wb");
+	if(channel!=NULL)
 	{
-		fprintf(canal, "%s\n", &img->ext[0]);
-		fprintf(canal, "%d %d\n", img->tamj, img->tami);
-		fprintf(canal, "%d\n", img->maxpix);
-
-		for(i=0;i<512;i++)
+		fprintf(channel,"%s\n",&image->pnm_type[0]);
+		fprintf(channel,"%d %d\n", image->sizej, image->sizei);
+		fprintf(channel,"%d\n", image->max_pixel);
+		if(strcmp(image->pnm_type,"P6")==0)
 		{
-				for(j=0;j<512;j++)
+			for(i=0;i<image->sizei;i++)
+			{
+				for(j=0;j<image->sizej;j++)
 				{
-					fprintf(canal, "%d %d %d\n", img->pixel[i][j].r, img->pixel[i][j].g, img->pixel[i][j].b);
+					fwrite(&image->pixel[i][j].r,1,1,channel);
+					fwrite(&image->pixel[i][j].g,1,1,channel);
+					fwrite(&image->pixel[i][j].b,1,1,channel);
 				}
+			}
 		}
-		fclose(canal);
-		return 1;
+		if(strcmp(image->pnm_type,"P3")==0)
+		{
+			for(i=0;i<image->sizei;i++)
+			{
+				for(j=0;j<image->sizej;j++)
+				{
+					fprintf(channel,"%d %d %d\n", image->pixel[i][j].r,image->pixel[i][j].g,image->pixel[i][j].b);
+				}
+			}
+		}
 	}
 	else
 	{
-		printf("error in criating a write stream\n");
-		return 0;
+		printf("writting to file \"%s\" error\n", file_name);
 	}
 }
