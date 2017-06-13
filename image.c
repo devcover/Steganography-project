@@ -2,6 +2,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+
 int pnmReader(Pnm *image, char *file_name)
 {
 	FILE *channel;
@@ -111,5 +112,66 @@ int pnmWritter(Pnm *image, char *file_name)
 	else
 	{
 		printf("writting to file \"%s\" error\n", file_name);
+	}
+}
+
+int bmpReader(Bmp *image, char *file_name)
+{
+	FILE *channel;
+	char c;
+	unsigned int i, j;
+	unsigned int clrsUsed;
+	channel = fopen(file_name, "rb");
+	if(channel!=NULL)
+	{
+		
+		fread(&image->bFile.bfhType, sizeof(BITMAPFILEHEADER)-sizeof(image->bFile.ignore), 1, channel);
+		fread(&image->bInfo.biHeader, sizeof(BITMAPINFOHEADER), 1, channel);
+		if((clrsUsed = image->bInfo.biHeader.bihClrUsed)==0)
+		{
+			clrsUsed = 1;
+		}
+
+		image->bInfo.biColors = (RGBQUAD *) malloc( sizeof( RGBQUAD ) * clrsUsed );
+		for(i=0;i<clrsUsed;i++)
+		{
+			fread(&image->bInfo.biColors[i],sizeof(RGBQUAD),1,channel);
+		}
+
+		image->pixels = malloc(1*image->bInfo.biHeader.bihImageSize);
+		fread(image->pixels,image->bInfo.biHeader.bihImageSize,1,channel);
+		
+	}
+	else
+	{
+		printf("reading file \"%s\" error\n", file_name);
+		return 0;
+	}
+}
+
+int bmpWritter(Bmp *image, char *file_name)
+{
+	FILE *channel;
+	unsigned int i, j;
+	unsigned int clrsUsed;
+	if((clrsUsed = image->bInfo.biHeader.bihClrUsed) == 0)
+	{
+		clrsUsed = 1;
+	}
+	channel = fopen(file_name, "wb");
+	if(channel!=NULL)
+	{
+		fwrite(&image->bFile.bfhType, sizeof(BITMAPFILEHEADER)-sizeof(image->bFile.ignore), 1, channel);
+		fwrite(&image->bInfo.biHeader, sizeof(BITMAPINFOHEADER), 1, channel);
+		for(i=0;i<clrsUsed;i++)
+		{
+			fwrite(&image->bInfo.biColors[i],sizeof(RGBQUAD),1,channel);
+		}
+		fwrite(image->pixels,image->bInfo.biHeader.bihImageSize,1,channel);
+	}
+	else
+	{
+		printf("reading file \"%s\" error\n", file_name);
+		return 0;
 	}
 }

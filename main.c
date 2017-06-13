@@ -1,9 +1,11 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include"imagem.h"
+#include"image.h"
 #include<string.h>
 int main(int argc, char* argv[])
 {
+
+	Bmp image;
 
 	int i;
 
@@ -80,8 +82,7 @@ int main(int argc, char* argv[])
 
 	}
 
-
-	/**/
-
+	bmpReader(&image, input_file);
+	bmpWritter(&image, output_image);
 	return 0;
 }
