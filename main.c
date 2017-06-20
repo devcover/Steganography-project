@@ -1,18 +1,20 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include"image.h"
 #include<string.h>
+#include"image.h"
+#include"DEncode.h"
+
 int main(int argc, char* argv[])
 {
 
-	Bmp image;
+	Pnm image;
+	Pnm image2;
+	FileData data;
 
 	int i;
-
 	int encoder_mode = 0;
 	char *input_file, *output_format, *output_image;
 	int param_error_verifier = 0;
-
 	/*arguments handling*/
 	for( i = 1; i < argc; i++)
 	{
@@ -82,7 +84,26 @@ int main(int argc, char* argv[])
 
 	}
 
-	bmpReader(&image, input_file);
-	bmpWritter(&image, output_image);
+	pnmReader(&image,"lena2.ppm");
+	pnmReader(&image2,"lena2.ppm");
+	fileReader(&data ,"teste.txt");
+	
+	/*for(i=0;i<data.size;i++)
+	{
+		printf("%x ", data.data[i] );
+	}
+	printf("\n\n");
+	pnmEncoder(&image, &data);
+	for(i=0;i<100;i++)
+	{
+		printf("%d: %d\t", i+1, image2.pixel[0][i].r);
+		printf("%d\t", image.pixel[0][i].r);
+		printf("| %d\t", image2.pixel[0][i].g);
+		printf("%d\t	", image.pixel[0][i].g);
+		printf("| %d\t", image2.pixel[0][i].b);
+		printf("%d\n", image.pixel[0][i].b);
+	}
+	printf("\n");*/
+
 	return 0;
 }

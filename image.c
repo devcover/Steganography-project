@@ -7,7 +7,7 @@ int pnmReader(Pnm *image, char *file_name)
 {
 	FILE *channel;
 	int i, j;
-
+	int pad;
 	channel = fopen(file_name, "r");
 	if(channel!=NULL)
 	{
@@ -15,13 +15,14 @@ int pnmReader(Pnm *image, char *file_name)
 		fscanf(channel, "%s", &image->pnm_type[0]);
 		fscanf(channel, "%d %d", &image->sizej, &image->sizei);
 		fscanf(channel, "%d", &image->max_pixel);
-
+		fread(&pad,1,1,channel);
 		/*Sees what's the value of pnm_type to do the specific treatment to it*/
 		if(strcmp(image->pnm_type,"P6")==0)
 		{
 			if(image->max_pixel<256)
 			{
 				image->pixel = (Pixel**) malloc( sizeof(Pixel*) * image->sizei);
+				
 				for(i=0;i<image->sizei;i++)
 				{
 					image->pixel[i] = (Pixel*) malloc( sizeof(Pixel) * image->sizej);	
