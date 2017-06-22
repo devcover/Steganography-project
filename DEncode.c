@@ -4,7 +4,7 @@
 #include<string.h>
 int fileReader(FileData* data, char* fileName)
 {
-    FILE* channel = fopen("teste.txt","rb");
+    FILE* channel = fopen(fileName,"rb");
     data->data = (char*)malloc(1);
 	int c = 0;
 	while(1)
@@ -19,7 +19,8 @@ int fileReader(FileData* data, char* fileName)
 			break;
 		}
 		c++;
-		if((realloc(data->data,c+1)) == NULL)
+        // :D
+		if( ( data->data = realloc(data->data,c+1) ) == NULL)
 		{
 			printf("realloc error");
 			return 0;
@@ -39,7 +40,7 @@ int pnmEncoder(Pnm* image, FileData* data)
     unsigned char getDataBit = 0b1;
     unsigned char getImageBit = 0b1;
 
-    if(strcmp(image->pnm_type,"P6") == 0||strcmp(image->pnm_type,"P3") == 0)
+    if(strcmp(image->pnm_type,"P6") == 0)
     {
         if(bitsNeeded > bitsAvailable)
         {
