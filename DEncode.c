@@ -4,22 +4,21 @@
 #include<string.h>
 int fileReader(FileData* data, char* fileName)
 {
-    FILE* channel = fopen(fileName,"rb");
+    FILE* channel = fopen(fileName, "rb");
     data->data = (char*)malloc(1);
 	int c = 0;
 	while(1)
 	{
 		if((fread(&data->data[c],1,1,channel)) == 0)
 		{
-            if((realloc(data->data,c)) == NULL)
-            {
-                printf("realloc error");
-                return 0;
-            }
-			break;
+		    if( ( data->data = realloc(data->data,c) ) == NULL)
+		    {
+		        printf("realloc error");
+		        return 0;
+		    }
+				break;
 		}
 		c++;
-        // :D
 		if( ( data->data = realloc(data->data,c+1) ) == NULL)
 		{
 			printf("realloc error");
@@ -28,6 +27,11 @@ int fileReader(FileData* data, char* fileName)
 	}
     data->size = c;
     return 1;
+}
+int fileWritter(FileData* data, char* fileName)
+{
+    FILE* channel = fopen(fileName,"wb");
+    fwrite(data->data, data->size, 1, channel);
 }
 int pnmEncoder(Pnm* image, FileData* data)
 {
@@ -40,6 +44,7 @@ int pnmEncoder(Pnm* image, FileData* data)
     unsigned char getDataBit = 0b1;
     unsigned char getImageBit = 0b1;
 
+    int runTimes;
     if(strcmp(image->pnm_type,"P6") == 0)
     {
         if(bitsNeeded > bitsAvailable)
@@ -67,57 +72,103 @@ int pnmEncoder(Pnm* image, FileData* data)
                     //compare 'i' lsb of data to lsb of image .
                     //if different, change lsb image's pixel. 
                     //else, do nothing
-                    
-                    if( (int) ( ((j*8) + i) / numPixels) == 0)
+                    runTimes = (int) ( ((j*8) + i) / numPixels );
+                    switch(runTimes)
                     {
-                        getImageBit &= image->pixel[height][width].r;
-                        if(getDataBit != getImageBit)
-                        {
-                            
-                            if(getImageBit==0)
+                        case 0:
+                            getImageBit &= image->pixel[height][width].r;
+                            if(getDataBit != getImageBit)
                             {
-                                image->pixel[height][width].r ^= 1;
+                                
+                                if(getImageBit==0)
+                                {
+                                    image->pixel[height][width].r ^= 1;
+                                }
+                                else
+                                {
+                                    image->pixel[height][width].r >>= 1;
+                                    image->pixel[height][width].r <<= 1;
+                                }
                             }
-                            else
+                            break;
+                        case 1:
+                            getImageBit &= image->pixel[height][width].g;
+                            if(getDataBit != getImageBit)
                             {
-                                image->pixel[height][width].r >>= 1;
-                                image->pixel[height][width].r <<= 1;
+                                if(getImageBit==0)
+                                {
+                                    image->pixel[height][width].g ^= 1;
+                                }
+                                else
+                                {
+                                    image->pixel[height][width].g ^= 0;
+                                }
                             }
-                        }
+                            break;
+                        case 2:
+                            getImageBit &= image->pixel[height][width].b;
+                            if(getDataBit != getImageBit)
+                            {
+                                if(getImageBit==0)
+                                {
+                                    image->pixel[height][width].b ^= 1;
+                                }
+                                else
+                                {
+                                    image->pixel[height][width].b ^= 0;
+                                }
+                            }
+                            break;
+                        default:
+                            printf("error. no more pixels to encode\n");
+                            return 0;
                     }
-                    if( (int) (((j*8) + i) / numPixels) == 1)
-                    {
-                        getImageBit &= image->pixel[height][width].g;
-                        if(getDataBit != getImageBit)
-                        {
-                            if(getImageBit==0)
-                            {
-                                image->pixel[height][width].g ^= 1;
-                            }
-                            else
-                            {
-                                image->pixel[height][width].g ^= 0;
-                            }
-                        }
-                    }
-                    if( (int) (((j*8) + i) / numPixels) == 2)
-                    {
-                        getImageBit &= image->pixel[height][width].b;
-                        if(getDataBit != getImageBit)
-                        {
-                            if(getImageBit==0)
-                            {
-                                image->pixel[height][width].b ^= 1;
-                            }
-                            else
-                            {
-                                image->pixel[height][width].b ^= 0;
-                            }
-                        }
-                    }
-                    
                 }
             }
         }
     }
+}
+int pnmDecoder(Pnm* image, FileData* data, int size)
+{
+    int i, t;
+    data->size = size;
+    data->data = (char *) calloc(size,sizeof(char));
+    unsigned char bitTransporter = 0b1;
+    int height, width;
+    int imageRunTimes;
+
+    for(t=0;t<size;t++)
+    {
+        for(i=0;i<8;i++)
+        {
+            
+            bitTransporter = 0b1;
+            width = i+(t*8);
+            height = ( i + (t*8) )/ image->sizej*image->sizei;
+            imageRunTimes = (int) (width+height) / image->sizej*image->sizei;
+            if( imageRunTimes == 0 )
+            {
+                bitTransporter &= image->pixel[height][width].r;
+                printf("%d.%d: %x=",t,i,bitTransporter);
+                bitTransporter <<= i;
+                data->data[t] += bitTransporter;
+                printf("%x|", image->pixel[height][width].r);
+            }
+                
+            if( imageRunTimes == 1 )
+            {
+                bitTransporter &= image->pixel[height][width].r;
+                bitTransporter <<= i;
+                data->data[t] += bitTransporter;
+            }
+                
+            if( imageRunTimes == 2 )
+            {
+                bitTransporter &= image->pixel[height][width].r;
+                bitTransporter <<= i;
+                data->data[t] += bitTransporter;
+            }
+        }
+        printf("\n");
+    }     
 }

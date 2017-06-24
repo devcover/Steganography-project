@@ -69,6 +69,7 @@ int pnmReader(Pnm *image, char *file_name)
 		}
 		if(strcmp(image->pnm_type,"P2")==0){}
 		if(strcmp(image->pnm_type,"P1")==0){}
+		fclose(channel);
 	}
 	else
 	{
@@ -109,6 +110,7 @@ int pnmWritter(Pnm *image, char *file_name)
 				}
 			}
 		}
+		fclose(channel);
 	}
 	else
 	{
@@ -141,7 +143,7 @@ int bmpReader(Bmp *image, char *file_name)
 
 		image->pixels = malloc(1*image->bInfo.biHeader.bihImageSize);
 		fread(image->pixels,image->bInfo.biHeader.bihImageSize,1,channel);
-		
+		fclose(channel);
 	}
 	else
 	{
@@ -155,20 +157,21 @@ int bmpWritter(Bmp *image, char *file_name)
 	FILE *channel;
 	unsigned int i, j;
 	unsigned int clrsUsed;
-	if((clrsUsed = image->bInfo.biHeader.bihClrUsed) == 0)
-	{
-		clrsUsed = 1;
-	}
 	channel = fopen(file_name, "wb");
 	if(channel!=NULL)
 	{
 		fwrite(&image->bFile.bfhType, sizeof(BITMAPFILEHEADER)-sizeof(image->bFile.ignore), 1, channel);
 		fwrite(&image->bInfo.biHeader, sizeof(BITMAPINFOHEADER), 1, channel);
+		if((clrsUsed = image->bInfo.biHeader.bihClrUsed) == 0)
+		{
+			clrsUsed = 1;
+		}
 		for(i=0;i<clrsUsed;i++)
 		{
 			fwrite(&image->bInfo.biColors[i],sizeof(RGBQUAD),1,channel);
 		}
 		fwrite(image->pixels,image->bInfo.biHeader.bihImageSize,1,channel);
+		fclose(channel);
 	}
 	else
 	{

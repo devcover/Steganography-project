@@ -62,6 +62,8 @@ typedef struct{
     long int size;
     unsigned char *data;
 }FileData;
+
 int fileReader(FileData* ,char*);
+int fileWritter(FileData* , char*);
 int pnmEncoder(Pnm*, FileData*);
-//void* pnmDecoder(Pnm*);
+int pnmDecoder(Pnm*, FileData*, int);
