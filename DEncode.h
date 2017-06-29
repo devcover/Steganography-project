@@ -53,7 +53,7 @@ typedef struct{
 typedef struct{
 	BITMAPFILEHEADER bFile;
 	BITMAPINFO bInfo;
-	void *pixels;
+	char *pixels;
 }Bmp;
 /*end bmp*/
 
@@ -65,5 +65,10 @@ typedef struct{
 
 int fileReader(FileData* ,char*);
 int fileWritter(FileData* , char*);
+int filePrinter(FileData*);
+
 int pnmEncoder(Pnm*, FileData*);
 int pnmDecoder(Pnm*, FileData*, int);
+
+int bmpEncoder(Bmp*, FileData*);
+int bmpDecoder(Bmp*, FileData*, long int);

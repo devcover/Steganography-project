@@ -53,7 +53,7 @@ typedef struct{
 typedef struct bmp{
 	BITMAPFILEHEADER bFile;
 	BITMAPINFO bInfo;
-	void *pixels;
+	char *pixels;
 }Bmp;
 /*end bmp*/
 

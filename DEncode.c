@@ -13,7 +13,7 @@ int fileReader(FileData* data, char* fileName)
 		{
 		    if( ( data->data = realloc(data->data,c) ) == NULL)
 		    {
-		        printf("realloc error");
+                printf("file might be empty\n");
 		        return 0;
 		    }
 				break;
@@ -22,6 +22,7 @@ int fileReader(FileData* data, char* fileName)
 		if( ( data->data = realloc(data->data,c+1) ) == NULL)
 		{
 			printf("realloc error");
+            
 			return 0;
 		}
 	}
@@ -31,7 +32,16 @@ int fileReader(FileData* data, char* fileName)
 int fileWritter(FileData* data, char* fileName)
 {
     FILE* channel = fopen(fileName,"wb");
-    fwrite(data->data, data->size, 1, channel);
+    fwrite(data->data, 1, data->size, channel);
+}
+int filePrinter(FileData* data)
+{
+    int i;
+    for(i=0;i<data->size;i++)
+    {
+        printf("%c",data->data[i]);
+    }
+    
 }
 int pnmEncoder(Pnm* image, FileData* data)
 {
@@ -41,9 +51,10 @@ int pnmEncoder(Pnm* image, FileData* data)
     long int bitsNeeded = data->size*8;
     long int numPixels = image->sizei*image->sizej;
     long int bitsAvailable = numPixels*3;
+
     unsigned char getDataBit = 0b1;
     unsigned char getImageBit = 0b1;
-
+    unsigned char inversor = 0b11111110;
     int runTimes;
     if(strcmp(image->pnm_type,"P6") == 0)
     {
@@ -61,7 +72,7 @@ int pnmEncoder(Pnm* image, FileData* data)
                 for(i=0;i<8;i++)
                 {
                     width = (i+(j*8))%(image->sizej);
-                    height = (int) (i+(j*8))/(image->sizej);
+                    height = (int) ((i+(j*8))/(image->sizej))%image->sizei;
                     getDataBit = 0b1;
                     getImageBit = 0b1;
                     //taking the 'i' lsb of data and the lsb of image
@@ -86,8 +97,7 @@ int pnmEncoder(Pnm* image, FileData* data)
                                 }
                                 else
                                 {
-                                    image->pixel[height][width].r >>= 1;
-                                    image->pixel[height][width].r <<= 1;
+                                    image->pixel[height][width].r &= inversor;
                                 }
                             }
                             break;
@@ -101,7 +111,7 @@ int pnmEncoder(Pnm* image, FileData* data)
                                 }
                                 else
                                 {
-                                    image->pixel[height][width].g ^= 0;
+                                    image->pixel[height][width].g &= inversor;
                                 }
                             }
                             break;
@@ -115,7 +125,7 @@ int pnmEncoder(Pnm* image, FileData* data)
                                 }
                                 else
                                 {
-                                    image->pixel[height][width].b ^= 0;
+                                    image->pixel[height][width].b &= inversor;
                                 }
                             }
                             break;
@@ -143,32 +153,102 @@ int pnmDecoder(Pnm* image, FileData* data, int size)
         {
             
             bitTransporter = 0b1;
-            width = i+(t*8);
-            height = ( i + (t*8) )/ image->sizej*image->sizei;
-            imageRunTimes = (int) (width+height) / image->sizej*image->sizei;
+            width = (i+(t*8))%(image->sizej);
+            height = (int) ((i+(t*8))/(image->sizej))%image->sizei;
+            imageRunTimes = (int) (i+(t*8))/ (image->sizej*image->sizei);
             if( imageRunTimes == 0 )
             {
                 bitTransporter &= image->pixel[height][width].r;
-                printf("%d.%d: %x=",t,i,bitTransporter);
                 bitTransporter <<= i;
                 data->data[t] += bitTransporter;
-                printf("%x|", image->pixel[height][width].r);
             }
                 
             if( imageRunTimes == 1 )
             {
-                bitTransporter &= image->pixel[height][width].r;
+                bitTransporter &= image->pixel[height][width].g;
                 bitTransporter <<= i;
                 data->data[t] += bitTransporter;
             }
                 
             if( imageRunTimes == 2 )
             {
-                bitTransporter &= image->pixel[height][width].r;
+                bitTransporter &= image->pixel[height][width].b;
                 bitTransporter <<= i;
                 data->data[t] += bitTransporter;
             }
         }
-        printf("\n");
     }     
+}
+int bmpEncoder(Bmp* image, FileData* data)
+{
+    
+    int i, j;
+ 
+    long int bitsNeeded = data->size*8;
+    long int numPixels = image->bInfo.biHeader.bihWidth*image->bInfo.biHeader.bihHeight;
+    long int bitsAvailable = numPixels*3;
+
+    unsigned char getDataBit = 0b1;
+    unsigned char getImageBit = 0b1;
+    unsigned char inversor = 0b11111110;
+    if(bitsNeeded > bitsAvailable)
+    {
+        printf("Not enough pixels available for enconding.\n");
+        return 0;
+    }
+    else
+    {
+       if(image->bInfo.biHeader.bihBitCount==24)
+       {
+            for(j=0;j<data->size;j++)
+            {
+                //putting 1 byte of data in 8 pixels(1bit for each) 
+                for(i=0;i<8;i++)
+                {
+                    getDataBit = 0b1;
+                    getImageBit = 0b1;
+                    //taking the 'i' lsb of data and the lsb of image
+                    getDataBit <<= i;
+                    getDataBit &= data->data[j];
+                    getDataBit >>= i;
+
+                    //compare 'i' lsb of data to lsb of image .
+                    //if different, change lsb image's pixel. 
+                    //else, do nothing
+                    //getImageBit &= image->pixel[height][width].r;
+                    getImageBit &= image->pixels[(j*8)+i];
+                    if(getDataBit != getImageBit)
+                    {  
+                        if(getImageBit==0)
+                        {
+                            image->pixels[(j*8)+i] ^= 1;
+                        }
+                         else
+                        {
+                            image->pixels[(j*8)+i] &= inversor;
+                        }
+                    }
+                }
+            }
+       } 
+        
+    }
+}
+int bmpDecoder(Bmp* image, FileData* data, long int size)
+{
+    int i, j;
+    data->size = size;
+    data->data = (char *) calloc(size,sizeof(char));
+    unsigned char bitTransporter = 0b1;
+    for(j=0;j<size;j++)
+    {
+        for(i=0;i<8;i++)
+        {
+            
+            bitTransporter = 0b1;
+            bitTransporter &= image->pixels[(j*8)+i];
+            bitTransporter <<= i;
+            data->data[j] += bitTransporter;
+        }
+    }
 }

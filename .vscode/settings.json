@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "dencode.h": "c",
+        "image.h": "c",
+        "stdio2.h": "c",
+        "getopt.h": "c",
+        "string2.h": "c",
+        "stdio.h": "c",
+        "libio.h": "c",
+        "stdlib.h": "c"
+    }
+}

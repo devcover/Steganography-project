@@ -47,5 +47,3 @@ Also it has a main that is responsible for getting these two libraries, the argu
 Yes. I would be glad if this code has some utility to someone.
 
 ---
-
-**parametro, retorno e função

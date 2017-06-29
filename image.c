@@ -124,6 +124,8 @@ int bmpReader(Bmp *image, char *file_name)
 	char c;
 	unsigned int i, j;
 	unsigned int clrsUsed;
+	int paddingBits;
+	int byteSizeRgb;
 	channel = fopen(file_name, "rb");
 	if(channel!=NULL)
 	{
@@ -136,13 +138,22 @@ int bmpReader(Bmp *image, char *file_name)
 		}
 
 		image->bInfo.biColors = (RGBQUAD *) malloc( sizeof( RGBQUAD ) * clrsUsed );
-		for(i=0;i<clrsUsed;i++)
+		if(image->bInfo.biHeader.bihImageSize != 0)
 		{
-			fread(&image->bInfo.biColors[i],sizeof(RGBQUAD),1,channel);
+			for(i=0;i<=clrsUsed;i++)
+			{
+				fread(&image->bInfo.biColors[i],sizeof(RGBQUAD),1,channel);
+			}
+			image->pixels = malloc(1*image->bInfo.biHeader.bihImageSize);
+			fread(image->pixels,image->bInfo.biHeader.bihImageSize,1,channel);
+		}else
+		{
+			paddingBits = (image->bInfo.biHeader.bihWidth * image->bInfo.biHeader.bihBitCount)%32;
+			byteSizeRgb = (( (image->bInfo.biHeader.bihWidth * image->bInfo.biHeader.bihBitCount) + paddingBits)*image->bInfo.biHeader.bihHeight)/8;
+			image->pixels = (char*) malloc((size_t)byteSizeRgb);
+			fread(image->pixels,1,byteSizeRgb,channel);
 		}
-
-		image->pixels = malloc(1*image->bInfo.biHeader.bihImageSize);
-		fread(image->pixels,image->bInfo.biHeader.bihImageSize,1,channel);
+		
 		fclose(channel);
 	}
 	else
@@ -157,6 +168,8 @@ int bmpWritter(Bmp *image, char *file_name)
 	FILE *channel;
 	unsigned int i, j;
 	unsigned int clrsUsed;
+	int paddingBits = (image->bInfo.biHeader.bihWidth * image->bInfo.biHeader.bihBitCount)%32;
+	int byteSizeRgb = (( (image->bInfo.biHeader.bihWidth * image->bInfo.biHeader.bihBitCount) + paddingBits)*image->bInfo.biHeader.bihHeight)/8;
 	channel = fopen(file_name, "wb");
 	if(channel!=NULL)
 	{
@@ -166,11 +179,17 @@ int bmpWritter(Bmp *image, char *file_name)
 		{
 			clrsUsed = 1;
 		}
-		for(i=0;i<clrsUsed;i++)
+		if(image->bInfo.biHeader.bihImageSize != 0)
 		{
-			fwrite(&image->bInfo.biColors[i],sizeof(RGBQUAD),1,channel);
+			for(i=0;i<=clrsUsed;i++)
+			{
+				fwrite(&image->bInfo.biColors[i],sizeof(RGBQUAD),1,channel);
+			}
+			fwrite(image->pixels,image->bInfo.biHeader.bihImageSize,1,channel);
+		}else
+		{
+			fwrite(image->pixels,1,byteSizeRgb,channel);
 		}
-		fwrite(image->pixels,image->bInfo.biHeader.bihImageSize,1,channel);
 		fclose(channel);
 	}
 	else
